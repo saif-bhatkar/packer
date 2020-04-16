@@ -73,9 +73,7 @@ type Config struct {
 	// vTPM enabled. [Details](https://cloud.google.com/security/shielded-cloud/shielded-vm)
 	EnableIntegrityMonitoring bool `mapstructure:"enable_integrity_monitoring" required:"false"`
 	// Whether to use an IAP proxy.
-	IAP bool `mapstructure:"iap"`
-	// Which port to connect the other end of the IAM localhost proxy to, if you care.
-	IAPLocalhostPort int `mapstructure:"iap_localhost_port"`
+	IAPConfig `mapstructure:",squash"`
 	// The unique name of the resulting image. Defaults to
 	// `packer-{{timestamp}}`.
 	ImageName string `mapstructure:"image_name" required:"false"`
@@ -324,6 +322,15 @@ func (c *Config) Prepare(raws ...interface{}) ([]string, error) {
 		c.StateTimeout = 5 * time.Minute
 	}
 
+	// set defaults for IAP
+	if c.IAPConfig.IAPHashBang == "" {
+		c.IAPConfig.IAPHashBang = "/bin/sh"
+	}
+	if c.IAPConfig.IAPExt == "" {
+		c.IAPConfig.IAPExt = ".sh"
+	}
+
+	// Set up communicator
 	if es := c.Comm.Prepare(&c.ctx); len(es) > 0 {
 		errs = packer.MultiErrorAppend(errs, es...)
 	}
